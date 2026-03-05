@@ -1,0 +1,10 @@
+# Build outputs
+api-server/build/
+api-server/.gradle/
+
+# Node modules
+admin-web/node_modules/
+
+# IDE
+.vscode/
+.DS_Store

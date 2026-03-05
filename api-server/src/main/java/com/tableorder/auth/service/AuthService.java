@@ -1,5 +1,9 @@
 package com.tableorder.auth.service;
 
+import com.tableorder.admin.entity.Admin;
+import com.tableorder.admin.entity.SuperAdmin;
+import com.tableorder.admin.repository.AdminRepository;
+import com.tableorder.admin.repository.SuperAdminRepository;
 import com.tableorder.auth.dto.*;
 import com.tableorder.common.exception.BusinessException;
 import com.tableorder.common.exception.ErrorCode;
@@ -27,6 +31,8 @@ public class AuthService {
     private final StoreRepository storeRepository;
     private final StoreTableRepository storeTableRepository;
     private final TableSessionRepository tableSessionRepository;
+    private final AdminRepository adminRepository;
+    private final SuperAdminRepository superAdminRepository;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
 
@@ -74,6 +80,58 @@ public class AuthService {
                 .tableNumber(table.getTableNumber())
                 .sessionId(session.getId())
                 .isNewSession(isNewSession)
+                .build();
+    }
+
+    @Transactional
+    public AdminLoginResponse loginAdmin(AdminLoginRequest request) {
+        Store store = storeRepository.findByStoreCode(request.getStoreCode())
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
+
+        Admin admin = adminRepository.findByStoreIdAndUsername(store.getId(), request.getUsername())
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
+
+        if (admin.isLocked()) {
+            throw new BusinessException(ErrorCode.ACCOUNT_LOCKED);
+        }
+
+        if (!passwordEncoder.matches(request.getPassword(), admin.getPassword())) {
+            admin.incrementLoginAttempts();
+            adminRepository.save(admin);
+            int remaining = Math.max(5 - admin.getLoginAttempts(), 0);
+            throw new BusinessException(ErrorCode.INVALID_CREDENTIALS,
+                    "인증 정보가 올바르지 않습니다. 남은 시도: " + remaining + "회");
+        }
+
+        admin.resetLoginAttempts();
+        adminRepository.save(admin);
+
+        String token = jwtTokenProvider.generateAdminToken(admin.getId(), store.getId());
+
+        return AdminLoginResponse.builder()
+                .token(token)
+                .storeName(store.getStoreName())
+                .storeCode(store.getStoreCode())
+                .adminId(admin.getId())
+                .username(admin.getUsername())
+                .build();
+    }
+
+    @Transactional(readOnly = true)
+    public SuperAdminLoginResponse loginSuperAdmin(SuperAdminLoginRequest request) {
+        SuperAdmin superAdmin = superAdminRepository.findByUsername(request.getUsername())
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_CREDENTIALS));
+
+        if (!passwordEncoder.matches(request.getPassword(), superAdmin.getPassword())) {
+            throw new BusinessException(ErrorCode.INVALID_CREDENTIALS);
+        }
+
+        String token = jwtTokenProvider.generateSuperAdminToken(superAdmin.getId());
+
+        return SuperAdminLoginResponse.builder()
+                .token(token)
+                .superAdminId(superAdmin.getId())
+                .username(superAdmin.getUsername())
                 .build();
     }
 
