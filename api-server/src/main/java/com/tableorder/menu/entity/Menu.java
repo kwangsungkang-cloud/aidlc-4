@@ -73,4 +73,9 @@ public class Menu {
     public void updateDisplayOrder(Integer displayOrder) {
         this.displayOrder = displayOrder;
     }
+
+    public void updateImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+    }
+
 }

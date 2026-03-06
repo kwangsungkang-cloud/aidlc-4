@@ -5,6 +5,27 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/common/components/ui
 import { api } from '@/common/lib/api-client';
 import type { MenuCategory, MenuItem } from '@/common/types';
 
+const FOOD_EMOJI_MAP: [RegExp, string][] = [
+  [/김치/, '🥬'], [/찌개/, '🍲'], [/탕|국/, '🍜'], [/밥|비빔|볶음밥/, '🍚'],
+  [/불고기|고기|갈비|삼겹/, '🥩'], [/치킨|닭/, '🍗'], [/피자/, '🍕'], [/버거|햄버거/, '🍔'],
+  [/면|라면|국수|파스타|냉면/, '🍝'], [/초밥|스시|회/, '🍣'], [/돈까스|까스|튀김/, '🍤'],
+  [/떡볶이|떡/, '🍡'], [/만두|교자/, '🥟'], [/샐러드/, '🥗'], [/스테이크/, '🥩'],
+  [/커피/, '☕'], [/라떼/, '☕'], [/아메리카노/, '☕'],
+  [/주스|에이드/, '🧃'], [/맥주|비어/, '🍺'], [/소주|사케/, '🍶'], [/와인/, '🍷'],
+  [/콜라|사이다|음료|탄산/, '🥤'], [/차|녹차|홍차/, '🍵'], [/스무디/, '🥤'],
+  [/아이스크림|빙수/, '🍨'], [/케이크/, '🍰'], [/빵|토스트/, '🍞'], [/쿠키/, '🍪'],
+  [/샌드위치/, '🥪'], [/타코/, '🌮'], [/카레/, '🍛'], [/덮밥/, '🍛'],
+  [/새우/, '🦐'], [/생선|연어|참치/, '🐟'], [/해물|해산물|조개/, '🦪'],
+  [/계란|달걀|오믈렛/, '🥚'], [/두부/, '🧈'], [/감자|프렌치|프라이/, '🍟'],
+];
+
+function getMenuEmoji(name: string): string {
+  for (const [pattern, emoji] of FOOD_EMOJI_MAP) {
+    if (pattern.test(name)) return emoji;
+  }
+  return '🍽️';
+}
+
 export default function MenuManagementPage() {
   const [categories, setCategories] = useState<MenuCategory[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<number | null>(null);
@@ -13,7 +34,6 @@ export default function MenuManagementPage() {
   const [formPrice, setFormPrice] = useState('');
   const [formDesc, setFormDesc] = useState('');
   const [formCategoryId, setFormCategoryId] = useState('');
-  const [formImage, setFormImage] = useState<File | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -31,18 +51,27 @@ export default function MenuManagementPage() {
 
   const resetForm = () => {
     setFormName(''); setFormPrice(''); setFormDesc(''); setFormCategoryId('');
-    setFormImage(null); setEditingMenu(null); setIsCreating(false);
+    setEditingMenu(null); setIsCreating(false);
+  };
+
+  const buildMenuFormData = () => {
+    const catId = formCategoryId ? Number(formCategoryId) : selectedCategory;
+    if (!catId) throw new Error('카테고리를 선택해주세요');
+    const fd = new FormData();
+    const menuJson = JSON.stringify({
+      categoryId: catId,
+      name: formName,
+      price: Number(formPrice),
+      description: formDesc || null,
+    });
+    fd.append('menu', new Blob([menuJson], { type: 'application/json' }));
+    return fd;
   };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    const fd = new FormData();
-    fd.append('categoryId', formCategoryId || String(selectedCategory));
-    fd.append('name', formName);
-    fd.append('price', formPrice);
-    if (formDesc) fd.append('description', formDesc);
-    if (formImage) fd.append('image', formImage);
     try {
+      const fd = buildMenuFormData();
       await api.postForm('/admin/menus', fd);
       resetForm();
       fetchMenus();
@@ -52,13 +81,8 @@ export default function MenuManagementPage() {
   const handleUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingMenu) return;
-    const fd = new FormData();
-    fd.append('categoryId', formCategoryId || String(selectedCategory));
-    fd.append('name', formName);
-    fd.append('price', formPrice);
-    if (formDesc) fd.append('description', formDesc);
-    if (formImage) fd.append('image', formImage);
     try {
+      const fd = buildMenuFormData();
       await api.putForm(`/admin/menus/${editingMenu.menuId}`, fd);
       resetForm();
       fetchMenus();
@@ -78,6 +102,7 @@ export default function MenuManagementPage() {
     setFormName(menu.name);
     setFormPrice(String(menu.price));
     setFormDesc(menu.description || '');
+    setFormCategoryId(String(selectedCategory || ''));
     setIsCreating(false);
   };
 
@@ -112,7 +137,19 @@ export default function MenuManagementPage() {
           </CardHeader>
           <CardContent>
             <form onSubmit={editingMenu ? handleUpdate : handleCreate} className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
+                <div>
+                  <label className="text-sm font-medium">카테고리</label>
+                  <select
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    value={formCategoryId || selectedCategory || ''}
+                    onChange={(e) => setFormCategoryId(e.target.value)}
+                  >
+                    {categories.map((cat) => (
+                      <option key={cat.categoryId} value={cat.categoryId}>{cat.name}</option>
+                    ))}
+                  </select>
+                </div>
                 <div>
                   <label className="text-sm font-medium">메뉴명</label>
                   <Input value={formName} onChange={(e) => setFormName(e.target.value)} required maxLength={100} />
@@ -125,10 +162,6 @@ export default function MenuManagementPage() {
               <div>
                 <label className="text-sm font-medium">설명</label>
                 <Input value={formDesc} onChange={(e) => setFormDesc(e.target.value)} maxLength={500} />
-              </div>
-              <div>
-                <label className="text-sm font-medium">이미지</label>
-                <Input type="file" accept="image/jpeg,image/png,image/webp" onChange={(e) => setFormImage(e.target.files?.[0] || null)} />
               </div>
               <div className="flex gap-2">
                 <Button type="submit">{editingMenu ? '수정' : '추가'}</Button>
@@ -143,9 +176,7 @@ export default function MenuManagementPage() {
         {currentMenus.map((menu) => (
           <Card key={menu.menuId}>
             <CardContent className="p-4">
-              {menu.imageUrl && (
-                <img src={menu.imageUrl} alt={menu.name} className="w-full h-32 object-cover rounded mb-2" />
-              )}
+              <div className="text-4xl mb-2">{getMenuEmoji(menu.name)}</div>
               <h4 className="font-medium">{menu.name}</h4>
               <p className="text-lg font-bold">{menu.price.toLocaleString()}원</p>
               {menu.description && <p className="text-sm text-muted-foreground mt-1">{menu.description}</p>}

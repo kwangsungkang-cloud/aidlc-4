@@ -3,12 +3,14 @@ package com.tableorder.menu.dto;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.util.List;
 
 @Getter
 @Builder
 @AllArgsConstructor
+@NoArgsConstructor
 public class CategoryMenuResponse {
 
     private List<CategoryItem> categories;
@@ -16,6 +18,7 @@ public class CategoryMenuResponse {
     @Getter
     @Builder
     @AllArgsConstructor
+    @NoArgsConstructor
     public static class CategoryItem {
         private Long categoryId;
         private String name;
@@ -25,6 +28,7 @@ public class CategoryMenuResponse {
     @Getter
     @Builder
     @AllArgsConstructor
+    @NoArgsConstructor
     public static class MenuItem {
         private Long menuId;
         private String name;

@@ -24,6 +24,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
+            .cors(cors -> {})
             .csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .headers(headers -> headers
@@ -36,6 +37,8 @@ public class SecurityConfig {
                 .requestMatchers("/api/admin/auth/**").permitAll()
                 .requestMatchers("/api/super-admin/auth/**").permitAll()
                 .requestMatchers("/actuator/health").permitAll()
+                // Customer menu - allow admin access for menu management
+                .requestMatchers(HttpMethod.GET, "/api/customer/menus").hasAnyRole("TABLE_SESSION", "STORE_ADMIN")
                 // Customer endpoints
                 .requestMatchers("/api/customer/**").hasRole("TABLE_SESSION")
                 // Admin endpoints

@@ -23,6 +23,18 @@ services:
     volumes:
       - redis-data:/data
 
+  localstack:
+    image: localstack/localstack:latest
+    container_name: tableorder-localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=s3
+      - DEFAULT_REGION=ap-northeast-2
+    volumes:
+      - localstack-data:/var/lib/localstack
+
 volumes:
   mysql-data:
   redis-data:
+  localstack-data:

@@ -63,6 +63,7 @@ app:
     expiration-hours: 16
   s3:
     bucket: ${S3_BUCKET:tableorder-menu-images}
+    endpoint: ${S3_ENDPOINT:}
     region: ${AWS_REGION:ap-northeast-2}
 
 management:

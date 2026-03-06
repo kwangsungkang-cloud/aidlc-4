@@ -135,6 +135,27 @@ public class MenuService {
     }
 
     /**
+     * 외부 URL로부터 이미지를 다운로드하여 메뉴 이미지를 업데이트한다.
+     */
+    @Transactional
+    @CacheEvict(value = "menus", key = "#storeId")
+    public MenuResponse updateMenuImageFromUrl(Long storeId, Long menuId, String imageUrl) {
+        Menu menu = menuRepository.findByIdAndStoreId(menuId, storeId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
+
+        // 기존 이미지 삭제
+        fileStorageService.delete(menu.getImageUrl());
+
+        // URL에서 이미지 다운로드 후 S3 업로드
+        String s3Url = fileStorageService.uploadFromUrl(imageUrl, storeId);
+        menu.updateImageUrl(s3Url);
+
+        log.info("메뉴 이미지 URL 업데이트: storeId={}, menuId={}, imageUrl={}", storeId, menuId, s3Url);
+        return MenuResponse.from(menu);
+    }
+
+
+    /**
      * 메뉴 삭제
      */
     @Transactional
