@@ -27,7 +27,7 @@ public class TableSession {
     private String sessionToken;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
+    @Column(name = "status", nullable = false, columnDefinition = "VARCHAR(20)")
     private Status status;
 
     @Column(name = "started_at", nullable = false)

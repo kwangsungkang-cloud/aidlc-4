@@ -6,6 +6,27 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import type { Category, MenuResponse, MenuItem, CartItem } from '@/common/types';
 
+const FOOD_EMOJI_MAP: [RegExp, string][] = [
+  [/김치/, '🥬'], [/찌개/, '🍲'], [/탕|국/, '🍜'], [/밥|비빔|볶음밥/, '🍚'],
+  [/불고기|고기|갈비|삼겹/, '🥩'], [/치킨|닭/, '🍗'], [/피자/, '🍕'], [/버거|햄버거/, '🍔'],
+  [/면|라면|국수|파스타|냉면/, '🍝'], [/초밥|스시|회/, '🍣'], [/돈까스|까스|튀김/, '🍤'],
+  [/떡볶이|떡/, '🍡'], [/만두|교자/, '🥟'], [/샐러드/, '🥗'], [/스테이크/, '🥩'],
+  [/커피/, '☕'], [/라떼/, '☕'], [/아메리카노/, '☕'],
+  [/주스|에이드/, '🧃'], [/맥주|비어/, '🍺'], [/소주|사케/, '🍶'], [/와인/, '🍷'],
+  [/콜라|사이다|음료|탄산/, '🥤'], [/차|녹차|홍차/, '🍵'], [/스무디/, '🥤'],
+  [/아이스크림|빙수/, '🍨'], [/케이크/, '🍰'], [/빵|토스트/, '🍞'], [/쿠키/, '🍪'],
+  [/샌드위치/, '🥪'], [/타코/, '🌮'], [/카레/, '🍛'], [/덮밥/, '🍛'],
+  [/새우/, '🦐'], [/생선|연어|참치/, '🐟'], [/해물|해산물|조개/, '🦪'],
+  [/계란|달걀|오믈렛/, '🥚'], [/두부/, '🧈'], [/감자|프렌치|프라이/, '🍟'],
+];
+
+function getMenuEmoji(name: string): string {
+  for (const [pattern, emoji] of FOOD_EMOJI_MAP) {
+    if (pattern.test(name)) return emoji;
+  }
+  return '🍽️';
+}
+
 interface Props {
   cart: CartItem[];
   onAddToCart: (menu: MenuItem) => void;
@@ -61,26 +82,21 @@ export function MenuPage({ cart, onAddToCart, onGoToCart, onGoToOrders, totalCou
       )}
 
       {/* Menu Grid */}
-      <div className="p-4 grid grid-cols-2 gap-3">
+      <div className="p-4 grid grid-cols-4 gap-3">
         {activeMenus.map(menu => {
           const qty = getCartQuantity(menu.menuId);
           return (
             <Card key={menu.menuId} className="overflow-hidden">
-              {menu.imageUrl && (
-                <div className="aspect-square bg-gray-100">
-                  <img src={menu.imageUrl} alt={menu.name} className="w-full h-full object-cover" />
-                </div>
-              )}
-              {!menu.imageUrl && (
-                <div className="aspect-square bg-gray-100 flex items-center justify-center text-4xl">🍽️</div>
-              )}
-              <CardContent className="p-3 space-y-1">
+              <div className="h-20 bg-gray-50 flex items-center justify-center text-5xl">
+                {getMenuEmoji(menu.name)}
+              </div>
+              <CardContent className="p-2.5 space-y-0.5">
                 <p className="font-medium text-sm line-clamp-1">{menu.name}</p>
-                {menu.description && <p className="text-xs text-muted-foreground line-clamp-2">{menu.description}</p>}
-                <p className="font-bold text-base">{menu.price.toLocaleString()}원</p>
+                {menu.description && <p className="text-xs text-muted-foreground line-clamp-1">{menu.description}</p>}
+                <p className="font-bold text-sm">{menu.price.toLocaleString()}원</p>
                 <Button
                   onClick={() => onAddToCart(menu)}
-                  className="w-full h-11 text-sm mt-1"
+                  className="w-full h-8 text-xs mt-1"
                   size="sm"
                 >
                   {qty > 0 ? `담기 (${qty})` : '담기'}

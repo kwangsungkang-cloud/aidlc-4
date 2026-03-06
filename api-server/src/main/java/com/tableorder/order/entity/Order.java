@@ -47,7 +47,7 @@ public class Order {
     private String orderNumber;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20)
+    @Column(name = "status", nullable = false, columnDefinition = "VARCHAR(20)")
     private Status status;
 
     @Column(name = "total_amount", nullable = false)

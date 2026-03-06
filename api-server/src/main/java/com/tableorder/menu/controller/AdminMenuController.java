@@ -2,6 +2,7 @@ package com.tableorder.menu.controller;
 
 import com.tableorder.common.security.SecurityContextUtil;
 import com.tableorder.menu.dto.CreateMenuRequest;
+import com.tableorder.menu.dto.ImageUrlRequest;
 import com.tableorder.menu.dto.MenuOrderRequest;
 import com.tableorder.menu.dto.MenuResponse;
 import com.tableorder.menu.service.MenuService;
@@ -74,4 +75,18 @@ public class AdminMenuController {
                 "success", true,
                 "updatedCount", updatedCount));
     }
+
+    /**
+     * 외부 URL로부터 메뉴 이미지 업데이트
+     * PATCH /api/admin/menus/{menuId}/image-url
+     */
+    @PatchMapping("/{menuId}/image-url")
+    public ResponseEntity<MenuResponse> updateMenuImageFromUrl(
+            @PathVariable Long menuId,
+            @Valid @RequestBody ImageUrlRequest request) {
+        Long storeId = SecurityContextUtil.getCurrentStoreId();
+        MenuResponse response = menuService.updateMenuImageFromUrl(storeId, menuId, request.getImageUrl());
+        return ResponseEntity.ok(response);
+    }
+
 }
